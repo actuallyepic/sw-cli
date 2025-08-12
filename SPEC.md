@@ -31,8 +31,7 @@ $SW_TEMPLATES_ROOT/                   # Set via SW_TEMPLATES_ROOT env var
       ...
   packages/                           # shared packages used by templates
     auth-ui/
-      sw.json
-      package.json
+      package.json                    # does not have sw.json
       ...
 
 $SW_PACKAGES_ROOT/                    # Set via SW_PACKAGES_ROOT env var

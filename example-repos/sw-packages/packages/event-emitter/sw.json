@@ -1,0 +1,10 @@
+{
+  "type": "package",
+  "slug": "event-emitter",
+  "name": "Event Emitter",
+  "description": "Type-safe event emitter for cross-component communication",
+  "tags": ["events", "pubsub", "emitter"],
+  "view": [
+    { "path": "src/index.ts", "lines": "all" }
+  ]
+}

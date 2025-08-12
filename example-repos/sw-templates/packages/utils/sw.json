@@ -1,0 +1,10 @@
+{
+  "type": "package",
+  "slug": "utils",
+  "name": "Utility Functions",
+  "description": "Common utility functions and helpers",
+  "tags": ["utils", "helpers", "common"],
+  "view": [
+    { "path": "src/index.ts", "lines": "all" }
+  ]
+}

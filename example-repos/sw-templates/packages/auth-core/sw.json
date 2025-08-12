@@ -1,0 +1,10 @@
+{
+  "type": "package",
+  "slug": "auth-core",
+  "name": "Authentication Core",
+  "description": "Core authentication logic, JWT handling, and password utilities",
+  "tags": ["auth", "jwt", "security", "backend"],
+  "view": [
+    { "path": "src/index.ts", "lines": "all" }
+  ]
+}

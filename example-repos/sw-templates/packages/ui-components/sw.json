@@ -1,0 +1,11 @@
+{
+  "type": "package",
+  "slug": "ui-components",
+  "name": "UI Components Library",
+  "description": "Shared React components for SaaS applications",
+  "tags": ["react", "ui", "components", "design-system"],
+  "view": [
+    { "path": "src/index.ts", "lines": "all" },
+    { "tree": { "path": "src/components", "depth": 2, "limit": 15 } }
+  ]
+}

@@ -761,6 +761,33 @@ sw use templates/paid-saas-app-with-auth --dry-run --json
 - Include size warning in output
 - Skip preview but show file metadata
 
+## Testing with Example Repositories
+
+The `example-repos/` directory contains two fully configured Turborepo monorepos that can be used for testing the SW CLI implementation:
+
+- **example-repos/sw-templates/**: Templates monorepo with apps and packages
+  - Contains nested dependencies (e.g., `saas-starter` → `auth-ui` → `auth-core` → `utils`)
+  - Tests complex dependency resolution scenarios
+  - Includes both apps and packages with proper `sw.json` metadata
+
+- **example-repos/sw-packages/**: Packages monorepo with multi-level dependencies
+  - Tests transitive dependency resolution
+  - Contains packages with 3+ levels of dependencies
+  - Validates circular dependency detection
+
+To test the CLI during development:
+```bash
+# Set environment variables to point to example repos
+export SW_TEMPLATES_ROOT="$(pwd)/example-repos/sw-templates"
+export SW_PACKAGES_ROOT="$(pwd)/example-repos/sw-packages"
+
+# Test commands
+sw list templates
+sw find "auth"
+sw view templates/saas-starter
+sw use templates/saas-starter --dry-run
+```
+
 ## Implementation Phases
 
 ### Phase 1: Core Foundation & Basic Commands

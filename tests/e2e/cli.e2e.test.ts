@@ -8,8 +8,7 @@ import { createTempDir, cleanupTempDir } from '../utils/test-helpers';
 
 describe('SW CLI E2E Tests', () => {
   const CLI_PATH = join(process.cwd(), 'dist', 'cli.js');
-  const EXAMPLE_TEMPLATES = join(process.cwd(), 'example-repos', 'sw-templates');
-  const EXAMPLE_PACKAGES = join(process.cwd(), 'example-repos', 'sw-packages');
+  const EXAMPLE_REPO = join(process.cwd(), 'example-repos', 'sw-example');
   const CONFIG_PATH = join(homedir(), '.swrc.json');
   
   let testWorkspace: string;
@@ -49,8 +48,7 @@ describe('SW CLI E2E Tests', () => {
   function runCLI(args: string, options: { cwd?: string } = {}): string {
     const env = {
       ...process.env,
-      SW_TEMPLATES_ROOT: EXAMPLE_TEMPLATES,
-      SW_PACKAGES_ROOT: EXAMPLE_PACKAGES,
+      SW_ROOT: EXAMPLE_REPO,
     };
     
     const cwd = options.cwd || testWorkspace;
@@ -73,32 +71,32 @@ describe('SW CLI E2E Tests', () => {
       const output = runCLI('list');
       
       expect(output).toContain('templates/saas-starter');
-      expect(output).toContain('templates/blog-starter');
-      expect(output).toContain('packages/github-service');
-      expect(output).toContain('packages/logger');
+      expect(output).toContain('templates/blog-template');
+      expect(output).toContain('packages/auth-ui');
+      expect(output).toContain('packages/ui');
     });
 
     it('should list only templates', () => {
       const output = runCLI('list templates');
       
       expect(output).toContain('templates/saas-starter');
-      expect(output).toContain('templates/blog-starter');
-      expect(output).not.toContain('packages/github-service');
+      expect(output).toContain('templates/blog-template');
+      expect(output).not.toContain('packages/auth-ui');
     });
 
     it('should list only packages', () => {
       const output = runCLI('list packages');
       
       expect(output).not.toContain('templates/saas-starter');
-      expect(output).toContain('packages/github-service');
-      expect(output).toContain('packages/logger');
+      expect(output).toContain('packages/auth-ui');
+      expect(output).toContain('packages/ui');
     });
 
     it('should filter by tag', () => {
       const output = runCLI('list --filter-tag saas');
       
       expect(output).toContain('templates/saas-starter');
-      expect(output).not.toContain('templates/blog-starter');
+      expect(output).not.toContain('templates/blog-template');
     });
 
     it('should output JSON format', () => {
@@ -132,10 +130,10 @@ describe('SW CLI E2E Tests', () => {
     });
 
     it('should view package details', () => {
-      const output = runCLI('view packages/github-service');
+      const output = runCLI('view packages/auth-ui');
       
-      expect(output).toContain('GitHub Service');
-      expect(output).toContain('TypeScript client for GitHub API');
+      expect(output).toContain('Auth UI Components');
+      expect(output).toContain('Reusable authentication UI components');
     });
 
     it('should support custom overrides', () => {
@@ -143,11 +141,11 @@ describe('SW CLI E2E Tests', () => {
       
       expect(output).toContain('package.json');
       expect(output).toContain('Lines 1-5');
-      expect(output).toContain('"name": "saas-starter"');
+      expect(output).toContain('"name": "@repo/saas-starter"');
     });
 
     it('should output JSON format', () => {
-      const output = runCLI('view templates/blog-starter --json');
+      const output = runCLI('view templates/blog-template --json');
       const json = JSON.parse(output);
       
       expect(Array.isArray(json)).toBe(true);
@@ -164,10 +162,10 @@ describe('SW CLI E2E Tests', () => {
 
   describe('find command', () => {
     it('should find text in code', () => {
-      const output = runCLI('find import --max-matches 5');
+      const output = runCLI('find auth --max-matches 5');
       
       expect(output).toContain('Found');
-      expect(output).toContain('.ts');
+      expect(output).toContain('auth');
     });
 
     it('should support case-insensitive search', () => {
@@ -178,7 +176,7 @@ describe('SW CLI E2E Tests', () => {
     });
 
     it('should filter by language', () => {
-      const output = runCLI('find function --lang ts --max-matches 3');
+      const output = runCLI('find react --lang ts --max-matches 3');
       
       expect(output).toContain('Found');
       // Should only match TypeScript files
@@ -204,11 +202,11 @@ describe('SW CLI E2E Tests', () => {
 
   describe('use command', () => {
     it('should perform dry-run without copying', async () => {
-      const output = runCLI('use templates/blog-starter --dry-run');
+      const output = runCLI('use templates/blog-template --dry-run');
       
       expect(output).toContain('Dry Run');
       expect(output).toContain('Would perform the following operations');
-      expect(output).toContain('blog-starter');
+      expect(output).toContain('blog-template');
       expect(output).toContain('Copy artifacts:');
       
       // Verify nothing was actually copied
@@ -239,13 +237,13 @@ describe('SW CLI E2E Tests', () => {
       const customWorkspace = await createTempDir();
       
       try {
-        const output = runCLI('use packages/logger --as my-logger --no-install', {
+        const output = runCLI('use packages/ui --as my-ui --no-install', {
           cwd: customWorkspace,
         });
         
         expect(output).toContain('Success');
         
-        const customPath = join(customWorkspace, 'packages', 'my-logger');
+        const customPath = join(customWorkspace, 'packages', 'my-ui');
         expect(existsSync(customPath)).toBe(true);
       } finally {
         await cleanupTempDir(customWorkspace);
@@ -254,10 +252,10 @@ describe('SW CLI E2E Tests', () => {
 
     it('should error when destination exists without --overwrite', async () => {
       // Create existing directory
-      const appsDir = join(testWorkspace, 'apps', 'blog-starter');
+      const appsDir = join(testWorkspace, 'apps', 'blog-template');
       await mkdir(appsDir, { recursive: true });
       
-      const output = runCLI('use templates/blog-starter --no-install');
+      const output = runCLI('use templates/blog-template --no-install');
       
       expect(output).toContain('Destination already exists');
       expect(output).toContain('--overwrite');
@@ -267,7 +265,7 @@ describe('SW CLI E2E Tests', () => {
       const customWorkspace = await createTempDir();
       
       try {
-        const output = runCLI('use packages/event-emitter --json --no-install', {
+        const output = runCLI('use packages/markdown --json --no-install', {
           cwd: customWorkspace,
         });
         const json = JSON.parse(output);
@@ -276,7 +274,7 @@ describe('SW CLI E2E Tests', () => {
         expect(json).toHaveProperty('destination');
         expect(json).toHaveProperty('internalDeps');
         expect(json).toHaveProperty('externalDeps');
-        expect(json.artifact.slug).toBe('packages/event-emitter');
+        expect(json.artifact.slug).toBe('packages/markdown');
       } finally {
         await cleanupTempDir(customWorkspace);
       }
@@ -308,7 +306,7 @@ describe('SW CLI E2E Tests', () => {
   describe('error handling', () => {
     it('should error with missing environment variables', () => {
       const env = { ...process.env };
-      delete env.SW_TEMPLATES_ROOT;
+      delete env.SW_ROOT;
       
       try {
         execSync(`bun ${CLI_PATH} list`, {

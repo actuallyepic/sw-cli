@@ -1,0 +1,18 @@
+{
+  "type": "package",
+  "slug": "github-service",
+  "name": "GitHub Service",
+  "description": "TypeScript client for GitHub API with repository management",
+  "tags": ["github", "api", "typescript", "octokit"],
+  "requiredEnv": [
+    {
+      "name": "GITHUB_TOKEN",
+      "description": "GitHub personal access token",
+      "example": "ghp_xxxxxxxxxxxxxxxxxxxx"
+    }
+  ],
+  "view": [
+    { "path": "src/index.ts", "lines": [1, 50] },
+    { "tree": { "path": "src", "depth": 2, "limit": 10 } }
+  ]
+}

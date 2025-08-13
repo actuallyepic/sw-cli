@@ -1,0 +1,10 @@
+{
+  "type": "package",
+  "slug": "logger",
+  "name": "Logger",
+  "description": "Structured logging with Winston",
+  "tags": ["logging", "winston", "observability"],
+  "view": [
+    { "path": "src/index.ts", "lines": "all" }
+  ]
+}

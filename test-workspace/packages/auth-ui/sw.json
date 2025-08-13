@@ -1,0 +1,10 @@
+{
+  "type": "package",
+  "slug": "auth-ui",
+  "name": "Authentication UI Components",
+  "description": "Pre-built authentication UI components with forms and flows",
+  "tags": ["auth", "ui", "react", "forms"],
+  "view": [
+    { "path": "src/index.ts", "lines": "all" }
+  ]
+}

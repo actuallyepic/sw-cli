@@ -95,10 +95,9 @@ describe('SW CLI E2E Tests', () => {
     });
 
     it('should filter by tag', () => {
-      const output = runCLI('list --filter-tag auth');
+      const output = runCLI('list --filter-tag saas');
       
       expect(output).toContain('templates/saas-starter');
-      expect(output).toContain('templates/auth-ui');
       expect(output).not.toContain('templates/blog-starter');
     });
 

@@ -38,12 +38,8 @@ export class ArtifactScanner {
         artifacts.push(...apps);
       }
 
-      // Also scan packages in templates repo
-      const packagesPath = join(rootPath, 'packages');
-      if (existsSync(packagesPath)) {
-        const packages = await this.scanDirectory(packagesPath, repo, 'package');
-        artifacts.push(...packages);
-      }
+      // NOTE: We do NOT scan packages in templates repo for direct access
+      // They are only available as dependencies when using templates
     }
 
     // Scan packages directory for packages repo
@@ -133,5 +129,26 @@ export class ArtifactScanner {
 
   clearCache(): void {
     this.artifactCache.clear();
+  }
+
+  // Scan ALL packages including those in templates repo (for dependency resolution only)
+  async scanAllPackagesForDependencies(): Promise<Artifact[]> {
+    const packages: Artifact[] = [];
+    
+    // Scan packages in templates repo
+    const templatesPackagesPath = join(this.config.env.SW_TEMPLATES_ROOT, 'packages');
+    if (existsSync(templatesPackagesPath)) {
+      const templatePackages = await this.scanDirectory(templatesPackagesPath, 'templates', 'package');
+      packages.push(...templatePackages);
+    }
+    
+    // Scan packages in packages repo
+    const packagesPath = join(this.config.env.SW_PACKAGES_ROOT, 'packages');
+    if (existsSync(packagesPath)) {
+      const repoPackages = await this.scanDirectory(packagesPath, 'packages', 'package');
+      packages.push(...repoPackages);
+    }
+    
+    return packages;
   }
 }

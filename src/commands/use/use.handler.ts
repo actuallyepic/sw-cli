@@ -212,7 +212,7 @@ export async function handleUse(slug: string, options: unknown): Promise<void> {
   if (opts.json) {
     console.log(JSON.stringify(result, null, 2));
   } else {
-    console.log(chalk.green.bold('\n✅ Success!\n'));
+    console.log(chalk.green.bold('\nSuccess!\n'));
     
     console.log(chalk.bold('Copied:'));
     console.log(`  • ${artifact.sw.name} → ${destPath}`);
@@ -225,7 +225,7 @@ export async function handleUse(slug: string, options: unknown): Promise<void> {
     }
     
     if (artifact.sw.requiredEnv.length > 0) {
-      console.log(chalk.yellow.bold('\n⚠️  Required Environment Variables:'));
+      console.log(chalk.yellow.bold('\nRequired Environment Variables:'));
       for (const env of artifact.sw.requiredEnv) {
         console.log(`  • ${chalk.bold(env.name)}: ${env.description}`);
         if (env.example) {
@@ -235,7 +235,7 @@ export async function handleUse(slug: string, options: unknown): Promise<void> {
     }
     
     if (opts.printNext && result.nextSteps && result.nextSteps.length > 0) {
-      console.log(chalk.cyan.bold('\n📝 Next Steps:'));
+      console.log(chalk.cyan.bold('\nNext Steps:'));
       result.nextSteps.forEach((step, i) => {
         console.log(`  ${i + 1}. ${step}`);
       });

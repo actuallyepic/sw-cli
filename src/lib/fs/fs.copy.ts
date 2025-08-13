@@ -70,7 +70,7 @@ export async function copyDirectory(
     });
     
     if (verbose) {
-      console.log(chalk.green('✓'), `Copied ${source} → ${destination}`);
+      console.log(chalk.green('[OK]'), `Copied ${source} → ${destination}`);
     }
     
     return {

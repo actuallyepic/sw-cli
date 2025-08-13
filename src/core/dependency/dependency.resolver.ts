@@ -48,9 +48,15 @@ export class DependencyResolver {
   }
 
   private async buildPackageIndex(): Promise<void> {
-    const artifacts = await this.scanner.scanArtifacts();
+    // Get all packages including internal ones from templates repo
+    const allPackages = await this.scanner.scanAllPackagesForDependencies();
     
-    for (const artifact of artifacts) {
+    // Also get templates for completeness
+    const templates = await this.scanner.scanArtifacts('templates');
+    
+    const allArtifacts = [...allPackages, ...templates];
+    
+    for (const artifact of allArtifacts) {
       if (artifact.packageJson && artifact.packageJson.name) {
         this.artifactsByPackageName.set(artifact.packageJson.name as string, artifact);
       }

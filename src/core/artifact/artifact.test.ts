@@ -104,14 +104,9 @@ describe('ArtifactScanner', () => {
       
       const artifacts = await scanner.scanArtifacts('all');
       
-      // Debug: log what we actually found
+      expect(artifacts).toHaveLength(2);
       const slugs = artifacts.map(a => a.slug).sort();
-      
-      // The scanner might find artifacts in test-workspace from previous tests
-      // So let's just check that our expected artifacts are there
-      expect(slugs).toContain('packages/package1');
-      expect(slugs).toContain('templates/template1');
-      expect(artifacts.length).toBeGreaterThanOrEqual(2);
+      expect(slugs).toEqual(['packages/package1', 'templates/template1']);
     });
 
     it('should ignore directories without sw.json', async () => {
@@ -210,6 +205,33 @@ describe('ArtifactScanner', () => {
       
       scanner.clearCache();
       expect(scanner.getArtifactBySlug('templates/cached')).toBeUndefined();
+    });
+  });
+
+  describe('scanAllPackagesForDependencies', () => {
+    it('should find packages in both repos including templates/packages', async () => {
+      await createMockMonorepo(tempTemplatesPath);
+      await createMockMonorepo(tempPackagesPath);
+      
+      // Create package in templates repo (should be found by this method)
+      await createMockArtifact(
+        join(tempTemplatesPath, 'packages'),
+        'internal-pkg',
+        createMockSwJson({ slug: 'internal-pkg', type: 'package' })
+      );
+      
+      // Create package in packages repo
+      await createMockArtifact(
+        join(tempPackagesPath, 'packages'),
+        'external-pkg',
+        createMockSwJson({ slug: 'external-pkg', type: 'package' })
+      );
+      
+      const packages = await scanner.scanAllPackagesForDependencies();
+      
+      expect(packages).toHaveLength(2);
+      const slugs = packages.map(p => p.id).sort();
+      expect(slugs).toEqual(['external-pkg', 'internal-pkg']);
     });
   });
 });

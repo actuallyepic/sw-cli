@@ -80,7 +80,7 @@ function formatTree(
   
   // Format current node
   const connector = isLast ? '└── ' : '├── ';
-  const icon = node.type === 'directory' ? '📁 ' : '📄 ';
+  const icon = node.type === 'directory' ? '[D] ' : '[F] ';
   const name = node.type === 'directory' ? chalk.bold(node.name) : node.name;
   
   if (prefix !== '' || !isLast) { // Skip root node name

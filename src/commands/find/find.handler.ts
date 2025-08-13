@@ -102,7 +102,7 @@ function formatPrettyOutput(hits: SearchHit[], options: any): void {
   // Display grouped results
   for (const [artifactSlug, artifactHits] of byArtifact) {
     if (artifactSlug !== 'unknown') {
-      console.log(chalk.cyan.bold(`📦 ${artifactSlug}`));
+      console.log(chalk.cyan.bold(`[${artifactSlug}]`));
     }
     
     for (const hit of artifactHits) {

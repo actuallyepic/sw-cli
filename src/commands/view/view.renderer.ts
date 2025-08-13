@@ -158,7 +158,7 @@ export function formatViewSections(sections: ViewSection[], json: boolean = fals
     output.push('');
     
     if (section.kind === 'file') {
-      output.push(chalk.cyan(`📄 ${section.path}`));
+      output.push(chalk.cyan(`File: ${section.path}`));
       
       if (section.range) {
         output.push(chalk.dim(`   Lines ${section.range[0]}-${section.range[1]}`));
@@ -175,7 +175,7 @@ export function formatViewSections(sections: ViewSection[], json: boolean = fals
         });
       }
     } else if (section.kind === 'tree') {
-      output.push(chalk.cyan(`📁 ${section.path}/`));
+      output.push(chalk.cyan(`Directory: ${section.path}/`));
       output.push(chalk.dim('─'.repeat(60)));
       
       if (section.tree) {

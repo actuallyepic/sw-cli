@@ -25,9 +25,9 @@ export async function renderArtifactView(
   // Get view specs from artifact or use defaults
   let viewSpecs = artifact.sw.view || getDefaultViewSpecs();
   
-  // Apply overrides
+  // Apply overrides - if overrides are provided, use only those
   if (overrideSpecs.length > 0) {
-    viewSpecs = [...viewSpecs, ...overrideSpecs];
+    viewSpecs = overrideSpecs;
   }
   
   // Render each view spec

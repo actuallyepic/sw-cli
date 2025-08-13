@@ -1,0 +1,14 @@
+{
+  "type": "template",
+  "slug": "admin-panel",
+  "name": "Admin Panel",
+  "description": "Admin dashboard with auth",
+  "tags": ["admin", "dashboard", "auth"],
+  "requiredEnv": [
+    {
+      "name": "ADMIN_SECRET",
+      "description": "Admin panel secret",
+      "example": "admin_secret_key"
+    }
+  ]
+}

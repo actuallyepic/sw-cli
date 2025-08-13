@@ -1,0 +1,8 @@
+{
+  "name": "admin-panel",
+  "version": "1.0.0",
+  "dependencies": {
+    "@repo/auth-ui": "workspace:*",
+    "@repo/database": "workspace:*"
+  }
+}

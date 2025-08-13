@@ -2,6 +2,7 @@ import { mkdir } from 'fs/promises';
 import { existsSync, cpSync } from 'fs';
 import { dirname } from 'path';
 import chalk from 'chalk';
+import { areDirectoriesIdentical } from './hash.utils';
 
 export interface CopyOptions {
   overwrite?: boolean;
@@ -12,8 +13,9 @@ export interface CopyOptions {
 export interface CopyResult {
   source: string;
   destination: string;
-  action: 'copied' | 'skipped' | 'overwritten' | 'would-copy';
+  action: 'copied' | 'skipped' | 'overwritten' | 'would-copy' | 'identical';
   error?: string;
+  message?: string;
 }
 
 
@@ -38,11 +40,30 @@ export async function copyDirectory(
   const destExists = existsSync(destination);
   
   if (destExists && !overwrite) {
+    // Check if the directories are identical
+    if (areDirectoriesIdentical(source, destination)) {
+      if (verbose) {
+        console.log(chalk.yellow('[SKIP]'), `${destination} - identical to source`);
+      }
+      return {
+        source,
+        destination,
+        action: 'identical',
+        message: 'Skipped - package is identical to source',
+      };
+    }
+    
+    // Directories exist but are different - provide helpful error
+    const packageName = destination.split('/').pop();
     return {
       source,
       destination,
       action: 'skipped',
-      error: 'Destination already exists',
+      error: `Package conflict: ${packageName} already exists with local modifications.\n` +
+             `To resolve:\n` +
+             `  1. Rename your local package (folder + package.json name)\n` +
+             `  2. Update imports from '@repo/${packageName}' to your new name\n` +
+             `  3. Run the command again`,
     };
   }
   

@@ -7,6 +7,7 @@ import { ArtifactScanner } from '../../core/artifact/artifact.scanner';
 import { DependencyResolver } from '../../core/dependency/dependency.resolver';
 import { copyDirectory, CopyResult } from '../../lib/fs/fs.copy';
 import { detectPackageManager, runInstall, PackageManager } from '../../lib/process/process.pm';
+import { checkPackageNameConflict, getPackageName } from '../../lib/fs/package.utils';
 
 const UseOptionsSchema = z.object({
   into: z.enum(['apps', 'packages']).optional(),
@@ -105,6 +106,48 @@ export async function handleUse(slug: string, options: unknown): Promise<void> {
     });
   }
   
+  // Check for package name conflicts before copying
+  if (!opts.dryRun) {
+    const nameConflicts: string[] = [];
+    
+    for (const { source, destination } of copyPlan) {
+      const packageJsonPath = join(source, 'package.json');
+      const packageName = getPackageName(packageJsonPath);
+      
+      if (packageName) {
+        // Check if this package name already exists elsewhere in the workspace
+        const conflict = await checkPackageNameConflict(
+          packageName, 
+          process.cwd(),
+          join(destination, 'package.json')
+        );
+        
+        if (conflict.exists && conflict.conflictPath) {
+          // Check if it's the same destination (would be overwritten)
+          const destPackageJson = join(destination, 'package.json');
+          if (conflict.conflictPath !== destPackageJson) {
+            nameConflicts.push(
+              `Package name "${packageName}" already exists at ${conflict.conflictPath}\n` +
+              `  Would be duplicated at ${destination}`
+            );
+          }
+        }
+      }
+    }
+    
+    if (nameConflicts.length > 0) {
+      throw new Error(
+        `Package name conflict detected:\n\n${nameConflicts.join('\n\n')}\n\n` +
+        `To resolve:\n` +
+        `  1. Rename the existing package (both folder and package.json name)\n` +
+        `  2. Update all imports from the old package name to the new name\n` +
+        `  3. Or use a different workspace\n\n` +
+        `Note: The --as flag only changes the folder name, not the package.json name,\n` +
+        `so it won't resolve this conflict.`
+      );
+    }
+  }
+  
   // Display plan in dry-run mode
   if (opts.dryRun) {
     console.log(chalk.bold('\nDry Run - Would perform the following operations:\n'));
@@ -137,8 +180,9 @@ export async function handleUse(slug: string, options: unknown): Promise<void> {
   }
   
   const copyResults: CopyResult[] = [];
+  const skippedIdentical: string[] = [];
   
-  for (const { source, destination } of copyPlan) {
+  for (const { source, destination, artifact } of copyPlan) {
     const result = await copyDirectory(source, destination, {
       overwrite: opts.overwrite,
       verbose: !opts.json,
@@ -146,6 +190,11 @@ export async function handleUse(slug: string, options: unknown): Promise<void> {
     
     if (result.error) {
       throw new Error(`Failed to copy ${source}: ${result.error}`);
+    }
+    
+    // Track identical packages that were skipped
+    if (result.action === 'identical') {
+      skippedIdentical.push(artifact.sw.name || artifact.id);
     }
     
     copyResults.push(result);
@@ -220,7 +269,16 @@ export async function handleUse(slug: string, options: unknown): Promise<void> {
     if (internalDeps.length > 0) {
       console.log(chalk.bold('\nInternal dependencies copied:'));
       for (const dep of result.internalDeps) {
-        console.log(`  • ${dep.name} → ${dep.dest}`);
+        if (dep.action !== 'identical') {
+          console.log(`  • ${dep.name} → ${dep.dest}`);
+        }
+      }
+    }
+    
+    if (skippedIdentical.length > 0) {
+      console.log(chalk.yellow.bold('\nSkipped (identical to source):'));
+      for (const name of skippedIdentical) {
+        console.log(`  • ${name} - already exists with identical content`);
       }
     }
     

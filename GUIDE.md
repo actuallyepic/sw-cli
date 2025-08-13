@@ -1,182 +1,380 @@
 # SW CLI Guide
 
+The CLI is built for local, fast, zero-drama reuse. It helps you find, preview, and adopt artifacts into your current workspace—pulling along internal dependencies automatically and leaving external packages to your package manager.
+
+**When to reach for sw:**
+- You want a starter (template) to bootstrap a new app
+- You want to reuse an existing package (design system, auth, utils)
+- You want discoverability: list, filter, or search by tags or code
+- You want a curated preview before you commit to copying anything
+- You want safe adoption with dry run, rename, or overwrite controls
+
 ## Creating sw.json Files
 
+### Philosophy
+The `sw.json` file is your artifact's resume. It should provide enough information that developers can understand what your artifact does, how it fits into their stack, and what they're committing to before they copy it.
+
 ### Location Requirements
-- **Templates**: Place in `$SW_ROOT/apps/<template-name>/sw.json`
-- **Packages**: Place in `$SW_ROOT/packages/<package-name>/sw.json`
-- Must be valid JSON in the artifact's root directory alongside `package.json`
+- **Templates**: `$SW_ROOT/apps/<template-name>/sw.json`
+- **Packages**: `$SW_ROOT/packages/<package-name>/sw.json`
+- Must coexist with `package.json` in the artifact's root directory
 
-### Required Fields
-```json
-{
-  "type": "template" | "package",
-  "slug": "artifact-id",
-  "name": "Human Readable Name",
-  "description": "Brief description (optional)",
-  "tags": ["tag1", "tag2"],
-  "requiredEnv": [...],
-  "view": [...]
-}
-```
+### Schema & Best Practices
 
-### Field Specifications
-
-**type**: `"template"` for apps/, `"package"` for packages/
-
-**slug**: Unique identifier matching directory name (alphanumeric + hyphens)
-
-**tags**: Array for categorization/filtering. Common: `["auth", "ui", "database", "api", "nextjs", "react"]`
-
-**requiredEnv** (templates only):
-```json
-"requiredEnv": [
-  {
-    "name": "DATABASE_URL",
-    "description": "PostgreSQL connection string",
-    "example": "postgresql://user:pass@localhost:5432/db"
-  }
-]
-```
-
-**view** (optional): Curated preview sections
-```json
-"view": [
-  { "path": "README.md", "lines": "all" },
-  { "path": "src/index.ts", "lines": [1, 50] },
-  { "tree": { "path": "src", "depth": 2, "limit": 30 } }
-]
-```
-
-### Examples
-
-**Template** (`apps/saas-starter/sw.json`):
 ```json
 {
   "type": "template",
   "slug": "saas-starter",
-  "name": "SaaS Starter",
-  "description": "Production SaaS with auth & billing",
-  "tags": ["saas", "stripe", "auth"],
+  "name": "Production SaaS Starter",
+  "description": "Full-featured SaaS template with multi-tenant auth, Stripe billing, admin dashboard, and email workflows. Built on Next.js 14 with App Router, Tailwind CSS, and PostgreSQL. Includes CI/CD setup and monitoring.",
+  "tags": ["saas", "nextjs", "stripe", "postgresql", "multi-tenant", "production"],
   "requiredEnv": [
     {
-      "name": "STRIPE_KEY",
-      "description": "Stripe API key",
-      "example": "sk_test_..."
+      "name": "DATABASE_URL",
+      "description": "PostgreSQL connection string for main database",
+      "example": "postgresql://user:pass@localhost:5432/myapp"
     }
   ],
   "view": [
-    { "path": "README.md", "lines": "all" }
+    { "path": "README.md", "lines": "all" },
+    { "path": "src/app/page.tsx", "lines": [1, 100] },
+    { "path": "src/lib/auth/provider.tsx", "lines": [1, 80] },
+    { "tree": { "path": "src", "depth": 3, "limit": 50 } },
+    { "path": "package.json", "lines": [1, 40] }
   ]
 }
 ```
 
-**Package** (`packages/auth-ui/sw.json`):
+### Field Guidelines
+
+**`description`** - Write 2-3 sentences that answer:
+- What does this solve?
+- What stack/technologies does it use?
+- What makes it distinctive?
+
+Bad: "Auth package"
+Good: "Type-safe authentication package with JWT refresh tokens, OAuth providers (Google, GitHub), and React hooks. Includes session management, permission guards, and automatic token renewal."
+
+**`tags`** - Include:
+- Technology tags: `nextjs`, `react`, `vue`, `typescript`
+- Domain tags: `auth`, `billing`, `analytics`, `cms`
+- Architecture tags: `microservice`, `monolithic`, `serverless`
+- Maturity tags: `production`, `experimental`, `deprecated`
+
+**`view`** - Design for standalone understanding:
+```json
+"view": [
+  // 1. Always include README for overview
+  { "path": "README.md", "lines": [1, 150] },
+  
+  // 2. Show the main entry point or API surface
+  { "path": "src/index.ts", "lines": "all" },
+  
+  // 3. Include a key implementation file
+  { "path": "src/core/handler.ts", "lines": [1, 100] },
+  
+  // 4. Show structure with a tree
+  { "tree": { "path": "src", "depth": 3, "limit": 100 } },
+  
+  // 5. Include configuration files
+  { "path": "tsconfig.json", "lines": "all" },
+  { "path": ".env.example", "lines": "all" }
+]
+```
+
+**Goal**: Someone should be able to understand 80% of your artifact's implementation from the view alone.
+
+### Examples of Well-Documented Artifacts
+
+**Rich Template Example:**
 ```json
 {
-  "type": "package",
-  "slug": "auth-ui",
-  "name": "Auth Components",
-  "description": "Reusable auth UI",
-  "tags": ["auth", "ui", "react"]
+  "type": "template",
+  "slug": "marketplace-platform",
+  "name": "Multi-Vendor Marketplace Platform",
+  "description": "Complete marketplace with vendor onboarding, product catalog, cart/checkout, payment splitting, and admin controls. Features real-time inventory, review system, and shipping integrations. Built with Next.js, tRPC, Prisma, and Stripe Connect.",
+  "tags": [
+    "marketplace", "ecommerce", "multi-vendor", "stripe-connect",
+    "nextjs", "trpc", "prisma", "postgresql", "production"
+  ],
+  "requiredEnv": [
+    {
+      "name": "DATABASE_URL",
+      "description": "PostgreSQL database for all application data",
+      "example": "postgresql://user:pass@localhost:5432/marketplace"
+    },
+    {
+      "name": "STRIPE_SECRET_KEY",
+      "description": "Stripe secret key with Connect capabilities enabled",
+      "example": "sk_live_..."
+    },
+    {
+      "name": "STRIPE_CONNECT_WEBHOOK_SECRET",
+      "description": "Webhook secret for Stripe Connect events",
+      "example": "whsec_..."
+    }
+  ],
+  "view": [
+    { "path": "README.md", "lines": "all" },
+    { "path": "docs/ARCHITECTURE.md", "lines": [1, 200] },
+    { "path": "src/server/api/root.ts", "lines": "all" },
+    { "path": "src/pages/api/webhooks/stripe.ts", "lines": [1, 150] },
+    { "tree": { "path": "src", "depth": 3, "limit": 150 } },
+    { "path": "prisma/schema.prisma", "lines": [1, 100] },
+    { "path": ".env.example", "lines": "all" }
+  ]
 }
 ```
 
-## Using the SW CLI
-
-### Discovery Commands
-
-**List artifacts**
-```bash
-sw list                    # All artifacts
-sw list templates          # Templates only
-sw list packages           # Packages only
-sw list --filter-tag auth  # By tag
-sw list --filter-text ui   # By text search
-sw list --json            # Machine-readable
-sw list --quiet           # Slugs only
+**Detailed Package Example:**
+```json
+{
+  "type": "package",
+  "slug": "feature-flags",
+  "name": "Feature Flag System",
+  "description": "Runtime feature flag system with React hooks, HOCs, and server-side utilities. Supports percentage rollouts, user targeting, A/B tests, and flag prerequisites. Integrates with LaunchDarkly, Split.io, or uses local JSON config.",
+  "tags": [
+    "feature-flags", "experimentation", "ab-testing",
+    "react", "typescript", "launchdarkly", "split"
+  ],
+  "view": [
+    { "path": "README.md", "lines": "all" },
+    { "path": "src/index.ts", "lines": "all" },
+    { "path": "src/react/FeatureFlag.tsx", "lines": "all" },
+    { "path": "src/providers/launchdarkly.ts", "lines": [1, 100] },
+    { "tree": { "path": "src", "depth": 4, "limit": 100 } },
+    { "path": "examples/basic-usage.tsx", "lines": "all" }
+  ]
+}
 ```
 
-**Search code**
+## Core Commands at a Glance
+
+### 1. Discover
+
+**List everything (or narrow by scope):**
 ```bash
-sw find "stripe"                      # Text search
-sw find "async\s+function"            # Regex
-sw find "AUTH" --case-insensitive     # Case-insensitive
-sw find "import" --files-only         # List files only
-sw find "TODO" --context 2            # Show context lines
-sw find "api" --lang ts               # TypeScript only
-sw find "db" --scope packages         # Search packages only
+sw list                    # all artifacts
+sw list templates          # only templates
+sw list packages           # only packages
 ```
 
-### Inspection Commands
+**Useful switches:**
+- `--filter-tag <tag>` filter by tag(s)
+- `--filter-text "<text>"` case-insensitive substring over name/desc/tags
+- `--limit <n> --offset <n>` simple paging
+- `--long` adds version and required env names
+- `--paths` shows absolute source paths
+- `--quiet` slugs only (great for scripting)
+- `--json` machine-readable output
 
-**Preview artifacts**
+**Search code + metadata (fast):**
 ```bash
-sw view templates/saas-starter                          # Default preview
-sw view packages/ui --override src/Button.tsx           # Add file to preview
-sw view packages/database --override tree:prisma:3:100  # Show directory tree
-sw view templates/blog --json                           # JSON output
+sw find "like:{stripe}"              # substring match
+sw find "re:/async\\s+function/"     # regex
+sw find "exact:AuthProvider"         # exact match
 ```
 
-### Usage Commands
+**Scoping and filters:**
+- `--scope templates|packages`
+- `--filter code|meta|docs|tests` (repeatable)
+- `--lang ts|js|py|go|rust` or `--ext ts --ext tsx`
+- `--path "src/**" --path "!**/*.test.ts"` glob includes/excludes
 
-**Copy to workspace**
+**Matching controls:**
+- `--case-insensitive`, `--word`, `--context <N>`, `--files-only`, `--max-matches <n>`
+- `--json` for structured hits (file, line, snippet)
+
+> **Tip:** Search is extremely fast; use it like `rg` but scoped to reusable artifacts.
+
+### 2. Preview
+
+**View a curated preview (from sw.json):**
 ```bash
-sw use templates/saas-starter              # Copy template + all deps
-sw use packages/logger                     # Copy single package
-sw use templates/blog --as my-blog         # Rename on copy
-sw use packages/ui --no-install            # Skip npm/pnpm install
-sw use templates/api --dry-run             # Preview operation
-sw use templates/shop --overwrite          # Replace existing
-sw use packages/auth --into packages       # Explicit destination
-sw use templates/app --json                # JSON result
+sw view templates/saas-starter
+sw view packages/auth-ui
 ```
 
-### Common Workflows
-
-**Starting new project**:
+**Override to inspect specific files:**
 ```bash
-sw list templates --filter-tag nextjs     # Find Next.js templates
-sw view templates/saas-starter            # Preview template
-sw use templates/saas-starter             # Copy with dependencies
+# View entire file
+sw view packages/auth-ui --override src/index.ts
+
+# View specific line range
+sw view packages/auth-ui --override "src/components/LoginForm.tsx:1-80"
+
+# View multiple files
+sw view packages/ui --override src/Button.tsx --override src/Modal.tsx
+
+# View directory tree
+sw view packages/database --override tree:prisma
+sw view packages/database --override tree:src:3:100  # depth:3, limit:100
+
+# Combine multiple overrides for deep inspection
+sw view templates/blog \
+  --override src/pages/api/posts.ts \
+  --override "src/lib/markdown.ts:1-50" \
+  --override tree:src/components:2:50
 ```
 
-**Adding package to existing project**:
+**JSON output for tooling:**
 ```bash
-sw find "authentication" --scope packages # Find auth packages
-sw view packages/auth-ui                  # Check implementation
-sw use packages/auth-ui                   # Add to project
+sw view packages/logger --json | jq '.sections[].path'
 ```
 
-**Exploring codebase**:
+> **Pro tip:** Use view to understand the complete implementation before copying. The goal is to provide enough context that you could theoretically reimplement the core concepts without copying.
+
+### 3. Adopt
+
+**Copy an artifact (and its internal dependencies) into your workspace:**
 ```bash
-sw find "stripe.prices"                   # Find Stripe usage
-sw find "TODO|FIXME"                      # Find todos
-sw find "import.*@repo"                   # Find internal imports
+sw use templates/saas-starter     # copies to ./apps/saas-starter
+sw use packages/auth-ui           # copies to ./packages/auth-ui
 ```
 
-**Dependency inspection**:
+**Controls:**
+- `--dry-run` show the plan without copying
+- `--into apps|packages` override destination root
+- `--as <name>` rename destination folder (not package.json name)
+- `--overwrite` replace existing destination
+- `--no-install` skip package installation
+- `--pm pnpm|npm|yarn|bun` override package manager
+- `--print-next` show suggested next steps
+- `--json` emit operation report
+
+**Behavioral guarantees:**
+- Internal dependencies (`@repo/*`) are automatically resolved and copied
+- External dependencies remain in package.json for your package manager
+- Required environment variables are prominently displayed
+- Conflicts block operation unless `--overwrite` is passed
+- Identical packages (by hash) are automatically skipped
+- Package name conflicts are detected and reported
+
+## Practical Recipes
+
+### Find a starter and try it quickly
 ```bash
-sw use templates/complex --dry-run        # See all dependencies
-sw view packages/core --json | jq '.dependencies'  # Check deps
+sw list templates --filter-tag nextjs --long
+sw view templates/saas-starter
+sw view templates/saas-starter --override src/app/layout.tsx
+sw use templates/saas-starter --dry-run
+sw use templates/saas-starter --print-next
 ```
 
-### Key Concepts
+### Deep dive into a package before adopting
+```bash
+# Find the package
+sw list packages --filter-tag auth
 
-**Slugs**: Always `templates/<id>` or `packages/<id>` format
+# Inspect its complete structure
+sw view packages/auth-ui --override tree:src:5:200
 
-**Dependencies**: Automatically resolves & copies internal deps (`@repo/*`)
+# Read the main exports
+sw view packages/auth-ui --override src/index.ts
 
-**Conflicts**: Use `--overwrite` or rename with `--as`
+# Check a key component
+sw view packages/auth-ui --override src/components/AuthProvider.tsx
 
-**Workspaces**: Copies to `./apps/` (templates) or `./packages/` (packages)
+# Review the tests to understand usage
+sw view packages/auth-ui --override "tests/auth.test.ts:1-100"
 
-**Environment**: Set `SW_ROOT=/path/to/monorepo` before using
+# If satisfied, adopt it
+sw use packages/auth-ui --dry-run
+sw use packages/auth-ui
+```
 
-### Performance Tips
+### Surgical code search across reusable artifacts
+```bash
+# Find all Stripe webhook handlers
+sw find "re:/stripe\.webhooks\.constructEvent/" --scope templates --context 5
 
-- Use `--limit` for large result sets
-- Use `--scope` to narrow searches
-- Use `--quiet` for scripting
-- Use `--json` for programmatic access
-- Cache artifact index persists per session
+# Find all tRPC routers
+sw find "exact:createTRPCRouter" --lang ts --files-only
+
+# Find all database migrations
+sw find "like:{migration}" --path "**/migrations/**" --ext sql
+```
+
+### Understand an artifact's complete implementation
+```bash
+# Get everything you need to understand the auth package
+sw view packages/auth-ui \
+  --override README.md \
+  --override src/index.ts \
+  --override tree:src:10:500 \
+  --override package.json \
+  --override tsconfig.json \
+  --override "src/hooks/useAuth.ts:1-200" \
+  --override "src/providers/AuthProvider.tsx:1-300"
+```
+
+## Guardrails & Gotchas
+
+**Name & slug discipline:** Your sw.json slug must equal the folder name
+
+**Preview size limits:** Files larger than ~5 MB are summarized
+
+**Search prerequisites:** Fast search requires ripgrep (`rg`) in your shell
+
+**Package name conflicts:** The CLI detects duplicate package.json names and blocks copying
+
+**Hash-based deduplication:** Identical packages are skipped automatically
+
+**The --as flag:** Only renames the folder, not the package.json name
+
+## Mental Model: When to Use Which Command
+
+**"I want to browse"** → `sw list`
+
+**"I want to understand how it works"** → `sw view` with `--override`
+
+**"I want to find specific code patterns"** → `sw find`
+
+**"I'm ready to adopt it"** → `sw use` (start with `--dry-run`)
+
+**"I need to inspect everything"** → `sw view` with multiple `--override` flags
+
+## Advanced View Strategies
+
+### Strategy 1: API Surface Review
+```bash
+# For a package, review all public exports
+sw view packages/analytics \
+  --override src/index.ts \
+  --override src/types.ts \
+  --override tree:src/api:2:100
+```
+
+### Strategy 2: Implementation Deep Dive
+```bash
+# Understand core implementation details
+sw view packages/state-manager \
+  --override src/store.ts \
+  --override src/middleware/logger.ts \
+  --override src/hooks/useStore.ts \
+  --override tests/store.test.ts
+```
+
+### Strategy 3: Configuration Review
+```bash
+# Check all configuration and setup
+sw view templates/microservice \
+  --override .env.example \
+  --override docker-compose.yml \
+  --override Dockerfile \
+  --override tree:config:5:100
+```
+
+### Strategy 4: Full Architectural Understanding
+```bash
+# Get complete picture of a complex template
+sw view templates/enterprise-app \
+  --override docs/ARCHITECTURE.md \
+  --override tree:src:4:200 \
+  --override src/server/index.ts \
+  --override src/client/App.tsx \
+  --override infrastructure/terraform/main.tf \
+  --override .github/workflows/deploy.yml
+```
+
+Remember: The view command is your primary tool for understanding artifacts without committing to them. Use it liberally with overrides to inspect any aspect of the code before making adoption decisions.

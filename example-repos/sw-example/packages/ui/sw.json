@@ -1,0 +1,12 @@
+{
+  "type": "package",
+  "slug": "ui",
+  "name": "UI Component Library",
+  "description": "Shared UI components and design system",
+  "tags": ["ui", "react", "design-system"],
+  "requiredEnv": [],
+  "view": [
+    { "path": "src/index.ts", "lines": [1, 50] },
+    { "tree": { "path": "src", "depth": 2, "limit": 20 } }
+  ]
+}

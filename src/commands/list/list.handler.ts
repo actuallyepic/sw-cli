@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import chalk from 'chalk';
 import { loadConfig } from '../../core/config/config.loader';
-import { ArtifactScanner, RepoScope } from '../../core/artifact/artifact.scanner';
+import { ArtifactScanner, ArtifactScope } from '../../core/artifact/artifact.scanner';
 
 const ListOptionsSchema = z.object({
   filterTag: z.array(z.string()).optional(),
@@ -17,8 +17,8 @@ const ListOptionsSchema = z.object({
 
 export async function handleList(scope: string, options: unknown): Promise<void> {
   // Validate scope
-  const validScopes: RepoScope[] = ['templates', 'packages', 'all'];
-  if (!validScopes.includes(scope as RepoScope)) {
+  const validScopes: ArtifactScope[] = ['templates', 'packages', 'all'];
+  if (!validScopes.includes(scope as ArtifactScope)) {
     throw new Error(`Invalid scope: ${scope}. Must be one of: ${validScopes.join(', ')}`);
   }
 
@@ -28,7 +28,7 @@ export async function handleList(scope: string, options: unknown): Promise<void>
   // Load config and scan artifacts
   const config = await loadConfig();
   const scanner = new ArtifactScanner(config);
-  const artifacts = await scanner.scanArtifacts(scope as RepoScope);
+  const artifacts = await scanner.scanArtifacts(scope as ArtifactScope);
 
   // Apply filters
   let filtered = artifacts;

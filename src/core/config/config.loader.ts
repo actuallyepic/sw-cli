@@ -27,12 +27,9 @@ export async function loadConfig(): Promise<Config> {
   }
 
   // Validate paths exist
-  const { SW_TEMPLATES_ROOT, SW_PACKAGES_ROOT } = envResult.data;
-  if (!existsSync(SW_TEMPLATES_ROOT)) {
-    throw new Error(`Templates root does not exist: ${SW_TEMPLATES_ROOT}`);
-  }
-  if (!existsSync(SW_PACKAGES_ROOT)) {
-    throw new Error(`Packages root does not exist: ${SW_PACKAGES_ROOT}`);
+  const { SW_ROOT } = envResult.data;
+  if (!existsSync(SW_ROOT)) {
+    throw new Error(`SW root does not exist: ${SW_ROOT}`);
   }
 
   // Load user config

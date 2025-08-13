@@ -1,0 +1,29 @@
+{
+  "type": "template",
+  "slug": "saas-starter",
+  "name": "SaaS Starter Template",
+  "description": "A complete SaaS starter template with auth, billing, and dashboard",
+  "tags": ["saas", "nextjs", "auth", "stripe"],
+  "requiredEnv": [
+    {
+      "name": "DATABASE_URL",
+      "description": "PostgreSQL connection string",
+      "example": "postgresql://user:pass@localhost:5432/db"
+    },
+    {
+      "name": "STRIPE_SECRET_KEY",
+      "description": "Stripe secret key for billing",
+      "example": "sk_test_..."
+    },
+    {
+      "name": "NEXTAUTH_SECRET",
+      "description": "Secret for NextAuth.js",
+      "example": "generate-with-openssl-rand-base64-32"
+    }
+  ],
+  "view": [
+    { "path": "README.md", "lines": "all" },
+    { "path": "src/app/page.tsx", "lines": [1, 50] },
+    { "tree": { "path": "src", "depth": 2, "limit": 30 } }
+  ]
+}

@@ -2,7 +2,7 @@
 
 ## Overview
 
-SW is a command-line tool for managing and discovering reusable code templates and packages from local monorepo clones. It provides fast local search, dependency resolution, and workspace integration without any network operations.
+SW is a command-line tool for managing and discovering reusable code templates and packages from a local monorepo. It provides fast local search, dependency resolution, and workspace integration without any network operations.
 
 ## Core Principles
 
@@ -17,7 +17,7 @@ SW is a command-line tool for managing and discovering reusable code templates a
 ### 1. Filesystem Layout
 
 ```
-$SW_TEMPLATES_ROOT/                   # Set via SW_TEMPLATES_ROOT env var
+$SW_ROOT/                             # Set via SW_ROOT env var
   package.json
   turbo.json
   apps/                               # template applications
@@ -25,24 +25,20 @@ $SW_TEMPLATES_ROOT/                   # Set via SW_TEMPLATES_ROOT env var
       sw.json
       package.json
       src/...
-    paid-saas-app-with-auth/
+    blog-template/
       sw.json
       package.json
       ...
-  packages/                           # shared packages used by templates
+  packages/                           # reusable packages
     auth-ui/
-      package.json                    # does not have sw.json
-      ...
-
-$SW_PACKAGES_ROOT/                    # Set via SW_PACKAGES_ROOT env var
-  package.json
-  turbo.json
-  packages/
-    github-service/
       sw.json
       package.json
-      src/index.ts
-    aggrid-plus/
+      ...
+    database/
+      sw.json
+      package.json
+      ...
+    ui/
       sw.json
       package.json
       ...
@@ -59,8 +55,7 @@ $SW_PACKAGES_ROOT/                    # Set via SW_PACKAGES_ROOT env var
 #### Environment Variables (REQUIRED)
 
 ```bash
-export SW_TEMPLATES_ROOT=/path/to/sw-templates  # Path to templates monorepo clone
-export SW_PACKAGES_ROOT=/path/to/sw-packages    # Path to packages monorepo clone
+export SW_ROOT=/path/to/sw-monorepo  # Path to the SW monorepo
 ```
 
 #### Configuration File (`~/.swrc.json`)
@@ -126,24 +121,19 @@ Minimal metadata file per template/package:
 
 ### Artifact Discovery
 
-1. **Templates repository**:
-   - Apps: `templates/apps/*` - **Directly accessible** via CLI commands
-   - Packages: `templates/packages/*` - **NOT directly accessible** (internal use only)
+1. **Repository structure**:
+   - Apps: `$SW_ROOT/apps/*` - Templates for applications
+   - Packages: `$SW_ROOT/packages/*` - Reusable packages
 
-2. **Packages repository**:
-   - Packages: `packages/packages/*` - **Directly accessible** via CLI commands
+2. **Visibility Rules**:
+   - All templates in `apps/*` are listed, searchable, and usable
+   - All packages in `packages/*` are listed, searchable, and usable
+   - Both templates and packages can have `sw.json` metadata
 
-3. **Visibility Rules**:
-   - Templates in `templates/apps/*` are listed, searchable, and usable
-   - Packages in `packages/packages/*` are listed, searchable, and usable
-   - Packages in `templates/packages/*` are **hidden from all commands** (`list`, `view`, `find`)
-   - Hidden packages are **only** accessed as dependencies when using templates
-
-4. **Slug Format**:
-   - Templates: `templates/<id>` (e.g., `templates/paid-saas-app-with-auth`)
-   - Packages: `packages/<id>` (e.g., `packages/github-service`)
+3. **Slug Format**:
+   - Templates: `templates/<id>` (e.g., `templates/saas-starter`)
+   - Packages: `packages/<id>` (e.g., `packages/auth-ui`)
    - Used consistently across all commands for unambiguous artifact reference
-   - Note: `templates/<package-id>` slugs are invalid for direct access
 
 ### Dependency Classification
 
@@ -180,7 +170,7 @@ List available templates or packages with minimal metadata.
 sw list [templates|packages|all]
 ```
 
-**Note**: Only shows directly accessible artifacts. Packages in `templates/packages/*` are hidden and not listed.
+**Note**: Shows all artifacts with valid `sw.json` metadata in both `apps/` and `packages/` directories.
 
 **Flags**:
 - `--filter-tag <tag>`: Filter by tag (repeatable)
@@ -214,7 +204,7 @@ Fast local search across code and metadata using ripgrep. Searches all repositor
 sw find <pattern>
 ```
 
-**Note**: Only searches in directly accessible artifacts. Packages in `templates/packages/*` are excluded from search results.
+**Note**: Searches across all artifacts in both `apps/` and `packages/` directories.
 
 **Pattern Syntax**:
 - `re:/pattern/`: Regular expression search (Rust regex syntax)
@@ -280,7 +270,7 @@ sw view <slug>
 
 Example: `sw view templates/paid-saas-app-with-auth`
 
-**Note**: Cannot view packages in `templates/packages/*` directly. Use `sw view packages/<id>` for standalone packages only.
+**Note**: Can view any artifact with valid `sw.json` metadata using the appropriate slug format.
 
 **Flags**:
 - `--override <spec>`: Add or replace preview sections (repeatable)
@@ -358,10 +348,10 @@ When copying a template/package, the CLI performs recursive dependency resolutio
 
 1. **Parse source `package.json`**: Extract all dependencies, devDependencies, and peerDependencies
 2. **Classify each dependency**:
-   - **Internal**: Package name starts with `internalScopes` (e.g., `@repo/`) OR exists in templates/packages/ or packages/packages/
+   - **Internal**: Package name starts with `internalScopes` (e.g., `@repo/`) OR exists in `$SW_ROOT/packages/`
    - **External**: Everything else (npm registry packages)
 3. **For each internal dependency**:
-   - Locate source in `templates/packages/` OR `packages/packages/` by matching package name
+   - Locate source in `$SW_ROOT/packages/` by matching package name
    - Check if already exists in destination `./packages/`
    - If exists: Warn about conflict and skip (unless `--overwrite`)
    - If not: Copy to `./packages/<dep-slug>`
@@ -547,8 +537,7 @@ import { z } from 'zod';
 
 // Environment variable schema
 export const EnvConfigSchema = z.object({
-  SW_TEMPLATES_ROOT: z.string().min(1),
-  SW_PACKAGES_ROOT: z.string().min(1),
+  SW_ROOT: z.string().min(1),
 });
 
 // User config schema (~/.swrc.json)
@@ -600,7 +589,6 @@ export const ArtifactSchema = z.object({
   slug: z.string(),
   id: z.string(),
   type: z.enum(['template', 'package']),
-  repo: z.enum(['templates', 'packages']),
   relPath: z.string(),
   absPath: z.string(),
   sw: SwJsonSchema,
@@ -619,7 +607,7 @@ export type Artifact = z.infer<typeof ArtifactSchema>;
 - Throw descriptive errors for missing/invalid config
 
 #### Artifact Module (`src/core/artifact/`)
-- Scan filesystem for artifacts in both repos
+- Scan filesystem for artifacts in the monorepo
 - Build and cache artifact index
 - Validate `sw.json` files with Zod
 - Provide fast lookup by slug or ID
@@ -774,28 +762,23 @@ sw use templates/paid-saas-app-with-auth --dry-run --json
 - Include size warning in output
 - Skip preview but show file metadata
 
-## Testing with Example Repositories
+## Testing with Example Repository
 
-The `example-repos/` directory contains two fully configured Turborepo monorepos that can be used for testing the SW CLI implementation:
+The `example-repos/sw-example/` directory contains a fully configured Turborepo monorepo that can be used for testing the SW CLI implementation:
 
-- **example-repos/sw-templates/**: Templates monorepo with apps and packages
-  - Contains nested dependencies (e.g., `saas-starter` → `auth-ui` → `auth-core` → `utils`)
-  - Tests complex dependency resolution scenarios
+- **example-repos/sw-example/**: Single monorepo with apps and packages
+  - Contains templates in `apps/` directory
+  - Contains reusable packages in `packages/` directory
+  - Tests dependency resolution with nested dependencies
   - Includes both apps and packages with proper `sw.json` metadata
-
-- **example-repos/sw-packages/**: Packages monorepo with multi-level dependencies
-  - Tests transitive dependency resolution
-  - Contains packages with 3+ levels of dependencies
-  - Validates circular dependency detection
 
 To test the CLI during development:
 ```bash
-# Set environment variables to point to example repos
-export SW_TEMPLATES_ROOT="$(pwd)/example-repos/sw-templates"
-export SW_PACKAGES_ROOT="$(pwd)/example-repos/sw-packages"
+# Set environment variable to point to example repo
+export SW_ROOT="$(pwd)/example-repos/sw-example"
 
 # Test commands
-sw list templates
+sw list
 sw find "auth"
 sw view templates/saas-starter
 sw use templates/saas-starter --dry-run

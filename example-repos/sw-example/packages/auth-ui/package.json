@@ -1,0 +1,24 @@
+{
+  "name": "@repo/auth-ui",
+  "version": "1.0.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint \"**/*.ts*\""
+  },
+  "dependencies": {
+    "@repo/ui": "workspace:*",
+    "react": "^18.2.0",
+    "react-hook-form": "^7.47.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "eslint": "^8.48.0",
+    "tsup": "^7.2.0",
+    "typescript": "^5.2.2"
+  }
+}

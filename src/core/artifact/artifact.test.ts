@@ -12,24 +12,20 @@ import { join } from 'path';
 import { mkdir } from 'fs/promises';
 
 describe('ArtifactScanner', () => {
-  let tempTemplatesPath: string;
-  let tempPackagesPath: string;
+  let tempRootPath: string;
   let scanner: ArtifactScanner;
 
   beforeEach(async () => {
-    tempTemplatesPath = await createTempDir();
-    tempPackagesPath = await createTempDir();
+    tempRootPath = await createTempDir();
     
     const config = createMockConfig();
-    config.env.SW_TEMPLATES_ROOT = tempTemplatesPath;
-    config.env.SW_PACKAGES_ROOT = tempPackagesPath;
+    config.env.SW_ROOT = tempRootPath;
     
     scanner = new ArtifactScanner(config);
   });
 
   afterEach(async () => {
-    await cleanupTempDir(tempTemplatesPath);
-    await cleanupTempDir(tempPackagesPath);
+    await cleanupTempDir(tempRootPath);
   });
 
   describe('scanArtifacts', () => {
@@ -39,12 +35,12 @@ describe('ArtifactScanner', () => {
     });
 
     it('should find template artifacts', async () => {
-      // Create template monorepo structure
-      await createMockMonorepo(tempTemplatesPath);
+      // Create monorepo structure
+      await createMockMonorepo(tempRootPath);
       
       // Create a template artifact
       await createMockArtifact(
-        join(tempTemplatesPath, 'apps'),
+        join(tempRootPath, 'apps'),
         'my-template',
         createMockSwJson({
           type: 'template',
@@ -62,12 +58,12 @@ describe('ArtifactScanner', () => {
     });
 
     it('should find package artifacts', async () => {
-      // Create packages monorepo structure
-      await createMockMonorepo(tempPackagesPath);
+      // Create monorepo structure
+      await createMockMonorepo(tempRootPath);
       
       // Create a package artifact
       await createMockArtifact(
-        join(tempPackagesPath, 'packages'),
+        join(tempRootPath, 'packages'),
         'my-package',
         createMockSwJson({
           type: 'package',
@@ -84,20 +80,17 @@ describe('ArtifactScanner', () => {
     });
 
     it('should find both templates and packages with "all" scope', async () => {
-      // Only create apps directory for templates repo
-      await mkdir(join(tempTemplatesPath, 'apps'), { recursive: true });
-      
-      // Create packages monorepo
-      await createMockMonorepo(tempPackagesPath);
+      // Create monorepo structure
+      await createMockMonorepo(tempRootPath);
       
       await createMockArtifact(
-        join(tempTemplatesPath, 'apps'),
+        join(tempRootPath, 'apps'),
         'template1',
         createMockSwJson({ slug: 'template1', type: 'template' })
       );
       
       await createMockArtifact(
-        join(tempPackagesPath, 'packages'),
+        join(tempRootPath, 'packages'),
         'package1',
         createMockSwJson({ slug: 'package1', type: 'package' })
       );
@@ -110,11 +103,11 @@ describe('ArtifactScanner', () => {
     });
 
     it('should ignore directories without sw.json', async () => {
-      await createMockMonorepo(tempTemplatesPath);
+      await createMockMonorepo(tempRootPath);
       
       // Create directory without sw.json
       const { mkdir, writeFile } = await import('fs/promises');
-      const dirPath = join(tempTemplatesPath, 'apps', 'no-sw-json');
+      const dirPath = join(tempRootPath, 'apps', 'no-sw-json');
       await mkdir(dirPath, { recursive: true });
       await writeFile(
         join(dirPath, 'package.json'),
@@ -126,11 +119,11 @@ describe('ArtifactScanner', () => {
     });
 
     it('should handle invalid sw.json gracefully', async () => {
-      await createMockMonorepo(tempTemplatesPath);
+      await createMockMonorepo(tempRootPath);
       
       // Create artifact with invalid sw.json
       const { mkdir, writeFile } = await import('fs/promises');
-      const dirPath = join(tempTemplatesPath, 'apps', 'invalid');
+      const dirPath = join(tempRootPath, 'apps', 'invalid');
       await mkdir(dirPath, { recursive: true });
       await writeFile(
         join(dirPath, 'sw.json'),
@@ -142,10 +135,10 @@ describe('ArtifactScanner', () => {
     });
 
     it('should include package.json data', async () => {
-      await createMockMonorepo(tempTemplatesPath);
+      await createMockMonorepo(tempRootPath);
       
       await createMockArtifact(
-        join(tempTemplatesPath, 'apps'),
+        join(tempRootPath, 'apps'),
         'with-deps',
         createMockSwJson({ slug: 'with-deps' }),
         {
@@ -170,9 +163,9 @@ describe('ArtifactScanner', () => {
 
   describe('getArtifactBySlug', () => {
     beforeEach(async () => {
-      await createMockMonorepo(tempTemplatesPath);
+      await createMockMonorepo(tempRootPath);
       await createMockArtifact(
-        join(tempTemplatesPath, 'apps'),
+        join(tempRootPath, 'apps'),
         'test-artifact',
         createMockSwJson({ slug: 'test-artifact' })
       );
@@ -193,9 +186,9 @@ describe('ArtifactScanner', () => {
 
   describe('clearCache', () => {
     it('should clear the artifact cache', async () => {
-      await createMockMonorepo(tempTemplatesPath);
+      await createMockMonorepo(tempRootPath);
       await createMockArtifact(
-        join(tempTemplatesPath, 'apps'),
+        join(tempRootPath, 'apps'),
         'cached',
         createMockSwJson({ slug: 'cached' })
       );
@@ -209,29 +202,27 @@ describe('ArtifactScanner', () => {
   });
 
   describe('scanAllPackagesForDependencies', () => {
-    it('should find packages in both repos including templates/packages', async () => {
-      await createMockMonorepo(tempTemplatesPath);
-      await createMockMonorepo(tempPackagesPath);
+    it('should find all packages in the packages directory', async () => {
+      await createMockMonorepo(tempRootPath);
       
-      // Create package in templates repo (should be found by this method)
+      // Create multiple packages
       await createMockArtifact(
-        join(tempTemplatesPath, 'packages'),
-        'internal-pkg',
-        createMockSwJson({ slug: 'internal-pkg', type: 'package' })
+        join(tempRootPath, 'packages'),
+        'pkg1',
+        createMockSwJson({ slug: 'pkg1', type: 'package' })
       );
       
-      // Create package in packages repo
       await createMockArtifact(
-        join(tempPackagesPath, 'packages'),
-        'external-pkg',
-        createMockSwJson({ slug: 'external-pkg', type: 'package' })
+        join(tempRootPath, 'packages'),
+        'pkg2',
+        createMockSwJson({ slug: 'pkg2', type: 'package' })
       );
       
       const packages = await scanner.scanAllPackagesForDependencies();
       
       expect(packages).toHaveLength(2);
       const slugs = packages.map(p => p.id).sort();
-      expect(slugs).toEqual(['external-pkg', 'internal-pkg']);
+      expect(slugs).toEqual(['pkg1', 'pkg2']);
     });
   });
 });

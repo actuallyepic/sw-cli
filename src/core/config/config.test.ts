@@ -11,8 +11,7 @@ describe('Config Schemas', () => {
   describe('EnvConfigSchema', () => {
     it('should validate valid environment config', () => {
       const valid = {
-        SW_TEMPLATES_ROOT: '/path/to/templates',
-        SW_PACKAGES_ROOT: '/path/to/packages',
+        SW_ROOT: '/path/to/sw',
       };
       
       const result = EnvConfigSchema.safeParse(valid);
@@ -22,10 +21,8 @@ describe('Config Schemas', () => {
       }
     });
 
-    it('should reject missing SW_TEMPLATES_ROOT', () => {
-      const invalid = {
-        SW_PACKAGES_ROOT: '/path/to/packages',
-      };
+    it('should reject missing SW_ROOT', () => {
+      const invalid = {};
       
       const result = EnvConfigSchema.safeParse(invalid);
       expect(result.success).toBe(false);
@@ -33,8 +30,7 @@ describe('Config Schemas', () => {
 
     it('should reject empty strings', () => {
       const invalid = {
-        SW_TEMPLATES_ROOT: '',
-        SW_PACKAGES_ROOT: '/path/to/packages',
+        SW_ROOT: '',
       };
       
       const result = EnvConfigSchema.safeParse(invalid);
@@ -193,9 +189,8 @@ describe('Config Schemas', () => {
         slug: 'templates/my-template',
         id: 'my-template',
         type: 'template',
-        repo: 'templates',
         relPath: 'apps/my-template',
-        absPath: '/path/to/templates/apps/my-template',
+        absPath: '/path/to/sw/apps/my-template',
         sw: {
           type: 'template',
           slug: 'my-template',
@@ -213,26 +208,25 @@ describe('Config Schemas', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should reject invalid repo', () => {
-      const invalid = {
-        slug: 'templates/my-template',
-        id: 'my-template',
-        type: 'template',
-        repo: 'invalid',
-        relPath: 'apps/my-template',
-        absPath: '/path/to/templates/apps/my-template',
+    it('should validate artifact without repo field', () => {
+      const artifact = {
+        slug: 'packages/my-package',
+        id: 'my-package',
+        type: 'package',
+        relPath: 'packages/my-package',
+        absPath: '/path/to/sw/packages/my-package',
         sw: {
-          type: 'template',
-          slug: 'my-template',
-          name: 'My Template',
+          type: 'package',
+          slug: 'my-package',
+          name: 'My Package',
           tags: [],
           requiredEnv: [],
         },
         packageJson: {},
       };
       
-      const result = ArtifactSchema.safeParse(invalid);
-      expect(result.success).toBe(false);
+      const result = ArtifactSchema.safeParse(artifact);
+      expect(result.success).toBe(true);
     });
   });
 });

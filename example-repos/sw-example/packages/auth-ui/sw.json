@@ -1,0 +1,12 @@
+{
+  "type": "package",
+  "slug": "auth-ui",
+  "name": "Auth UI Components",
+  "description": "Reusable authentication UI components",
+  "tags": ["auth", "ui", "react"],
+  "requiredEnv": [],
+  "view": [
+    { "path": "src/index.ts", "lines": "all" },
+    { "tree": { "path": "src/components", "depth": 1 } }
+  ]
+}

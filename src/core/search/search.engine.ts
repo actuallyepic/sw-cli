@@ -52,13 +52,14 @@ export class SearchEngine {
 
   private getSearchPaths(options: SearchOptions): string[] {
     const paths: string[] = [];
+    const rootPath = this.config.env.SW_ROOT;
     
     if (options.scope === 'templates' || !options.scope) {
-      paths.push(this.config.env.SW_TEMPLATES_ROOT);
+      paths.push(`${rootPath}/apps`);
     }
     
     if (options.scope === 'packages' || !options.scope) {
-      paths.push(this.config.env.SW_PACKAGES_ROOT);
+      paths.push(`${rootPath}/packages`);
     }
     
     return paths;
@@ -227,9 +228,6 @@ export class SearchEngine {
   }
 
   private extractArtifactFromPath(filePath: string, searchPath: string): any {
-    const isTemplates = searchPath === this.config.env.SW_TEMPLATES_ROOT;
-    const repo = isTemplates ? 'templates' : 'packages';
-    
     // Try to extract artifact ID from path
     const relativePath = filePath.replace(searchPath, '').replace(/^\//, '');
     const parts = relativePath.split('/');
@@ -238,10 +236,12 @@ export class SearchEngine {
       const [topDir, artifactId] = parts;
       
       if ((topDir === 'apps' || topDir === 'packages')) {
+        const type = topDir === 'apps' ? 'template' : 'package';
+        const prefix = type === 'template' ? 'templates' : 'packages';
         return {
-          slug: `${repo}/${artifactId}`,
+          slug: `${prefix}/${artifactId}`,
           id: artifactId,
-          type: topDir === 'apps' ? 'template' : 'package',
+          type,
         };
       }
     }

@@ -1,0 +1,11 @@
+{
+  "type": "package",
+  "slug": "markdown",
+  "name": "Markdown Utilities",
+  "description": "MDX and markdown processing utilities",
+  "tags": ["markdown", "mdx", "parser"],
+  "requiredEnv": [],
+  "view": [
+    { "path": "src/index.ts", "lines": "all" }
+  ]
+}

@@ -23,8 +23,7 @@ export async function cleanupTempDir(path: string): Promise<void> {
 export function createMockConfig(): Config {
   return {
     env: {
-      SW_TEMPLATES_ROOT: '/mock/templates',
-      SW_PACKAGES_ROOT: '/mock/packages',
+      SW_ROOT: '/mock/sw',
     },
     user: {
       internalScopes: ['@repo'],

@@ -1,0 +1,12 @@
+{
+  "type": "template",
+  "slug": "blog-template",
+  "name": "Blog Template",
+  "description": "A modern blog template with MDX support and SEO optimization",
+  "tags": ["blog", "nextjs", "mdx", "seo"],
+  "requiredEnv": [],
+  "view": [
+    { "path": "README.md", "lines": [1, 40] },
+    { "path": "package.json", "lines": "all" }
+  ]
+}

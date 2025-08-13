@@ -1,0 +1,17 @@
+{
+  "type": "package",
+  "slug": "database",
+  "name": "Database Package",
+  "description": "Prisma database schema and client",
+  "tags": ["database", "prisma", "postgresql"],
+  "requiredEnv": [
+    {
+      "name": "DATABASE_URL",
+      "description": "PostgreSQL connection string",
+      "example": "postgresql://user:pass@localhost:5432/db"
+    }
+  ],
+  "view": [
+    { "path": "prisma/schema.prisma", "lines": [1, 50] }
+  ]
+}

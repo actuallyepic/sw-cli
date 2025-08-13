@@ -2,8 +2,7 @@ import { z } from 'zod';
 
 // Environment variable schema
 export const EnvConfigSchema = z.object({
-  SW_TEMPLATES_ROOT: z.string().min(1),
-  SW_PACKAGES_ROOT: z.string().min(1),
+  SW_ROOT: z.string().min(1),
 });
 
 // User config schema (~/.swrc.json)
@@ -55,7 +54,6 @@ export const ArtifactSchema = z.object({
   slug: z.string(),
   id: z.string(),
   type: z.enum(['template', 'package']),
-  repo: z.enum(['templates', 'packages']),
   relPath: z.string(),
   absPath: z.string(),
   sw: SwJsonSchema,

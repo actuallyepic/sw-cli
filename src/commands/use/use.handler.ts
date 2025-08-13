@@ -8,6 +8,7 @@ import { DependencyResolver } from '../../core/dependency/dependency.resolver';
 import { copyDirectory, CopyResult } from '../../lib/fs/fs.copy';
 import { detectPackageManager, runInstall, PackageManager } from '../../lib/process/process.pm';
 import { checkPackageNameConflict, getPackageName } from '../../lib/fs/package.utils';
+import { findWorkspaceRoot } from '../../lib/fs/workspace.utils';
 
 const UseOptionsSchema = z.object({
   into: z.enum(['apps', 'packages']).optional(),
@@ -66,10 +67,13 @@ export async function handleUse(slug: string, options: unknown): Promise<void> {
     throw new Error(`Artifact not found: ${slug}`);
   }
   
+  // Find workspace root to ensure we place artifacts in the correct location
+  const workspaceRoot = findWorkspaceRoot();
+  
   // Determine destination directory
   const destDir = opts.into || (artifact.type === 'template' ? 'apps' : 'packages');
   const destName = opts.as || artifact.id;
-  const destPath = join(process.cwd(), destDir, destName);
+  const destPath = join(workspaceRoot, destDir, destName);
   
   // Check for conflicts
   if (!opts.dryRun && !opts.overwrite && existsSync(destPath)) {
@@ -98,7 +102,7 @@ export async function handleUse(slug: string, options: unknown): Promise<void> {
   
   // Add internal dependencies
   for (const dep of internalDeps) {
-    const depDestPath = join(process.cwd(), 'packages', dep.id);
+    const depDestPath = join(workspaceRoot, 'packages', dep.id);
     copyPlan.push({
       source: dep.absPath,
       destination: depDestPath,
@@ -118,7 +122,7 @@ export async function handleUse(slug: string, options: unknown): Promise<void> {
         // Check if this package name already exists elsewhere in the workspace
         const conflict = await checkPackageNameConflict(
           packageName, 
-          process.cwd(),
+          workspaceRoot,
           join(destination, 'package.json')
         );
         
@@ -206,13 +210,13 @@ export async function handleUse(slug: string, options: unknown): Promise<void> {
   
   if (!opts.noInstall) {
     // Detect package manager
-    packageManager = opts.pm || detectPackageManager(process.cwd()) || config.user.defaultPackageManager as PackageManager;
+    packageManager = opts.pm || detectPackageManager(workspaceRoot) || config.user.defaultPackageManager as PackageManager;
     
     if (!opts.json) {
       console.log(chalk.cyan(`\nInstalling dependencies with ${packageManager}...`));
     }
     
-    installed = await runInstall(process.cwd(), packageManager, !opts.json);
+    installed = await runInstall(workspaceRoot, packageManager, !opts.json);
     
     if (!installed && !opts.json) {
       console.log(chalk.yellow('Warning: Package installation failed'));

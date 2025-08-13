@@ -127,16 +127,23 @@ Minimal metadata file per template/package:
 ### Artifact Discovery
 
 1. **Templates repository**:
-   - Apps: `templates/apps/*`
-   - Packages: `templates/packages/*`
+   - Apps: `templates/apps/*` - **Directly accessible** via CLI commands
+   - Packages: `templates/packages/*` - **NOT directly accessible** (internal use only)
 
 2. **Packages repository**:
-   - Packages: `packages/packages/*`
+   - Packages: `packages/packages/*` - **Directly accessible** via CLI commands
 
-3. **Slug Format**:
+3. **Visibility Rules**:
+   - Templates in `templates/apps/*` are listed, searchable, and usable
+   - Packages in `packages/packages/*` are listed, searchable, and usable
+   - Packages in `templates/packages/*` are **hidden from all commands** (`list`, `view`, `find`)
+   - Hidden packages are **only** accessed as dependencies when using templates
+
+4. **Slug Format**:
    - Templates: `templates/<id>` (e.g., `templates/paid-saas-app-with-auth`)
    - Packages: `packages/<id>` (e.g., `packages/github-service`)
    - Used consistently across all commands for unambiguous artifact reference
+   - Note: `templates/<package-id>` slugs are invalid for direct access
 
 ### Dependency Classification
 
@@ -173,6 +180,8 @@ List available templates or packages with minimal metadata.
 sw list [templates|packages|all]
 ```
 
+**Note**: Only shows directly accessible artifacts. Packages in `templates/packages/*` are hidden and not listed.
+
 **Flags**:
 - `--filter-tag <tag>`: Filter by tag (repeatable)
 - `--filter-text "<text>"`: Case-insensitive substring match
@@ -204,6 +213,8 @@ Fast local search across code and metadata using ripgrep. Searches all repositor
 ```bash
 sw find <pattern>
 ```
+
+**Note**: Only searches in directly accessible artifacts. Packages in `templates/packages/*` are excluded from search results.
 
 **Pattern Syntax**:
 - `re:/pattern/`: Regular expression search (Rust regex syntax)
@@ -268,6 +279,8 @@ sw view <slug>
 ```
 
 Example: `sw view templates/paid-saas-app-with-auth`
+
+**Note**: Cannot view packages in `templates/packages/*` directly. Use `sw view packages/<id>` for standalone packages only.
 
 **Flags**:
 - `--override <spec>`: Add or replace preview sections (repeatable)
@@ -345,10 +358,10 @@ When copying a template/package, the CLI performs recursive dependency resolutio
 
 1. **Parse source `package.json`**: Extract all dependencies, devDependencies, and peerDependencies
 2. **Classify each dependency**:
-   - **Internal**: Package name starts with `internalScopes` (e.g., `@repo/`) OR exists in templates/packages/
+   - **Internal**: Package name starts with `internalScopes` (e.g., `@repo/`) OR exists in templates/packages/ or packages/packages/
    - **External**: Everything else (npm registry packages)
 3. **For each internal dependency**:
-   - Locate source in `templates/packages/` by matching package name
+   - Locate source in `templates/packages/` OR `packages/packages/` by matching package name
    - Check if already exists in destination `./packages/`
    - If exists: Warn about conflict and skip (unless `--overwrite`)
    - If not: Copy to `./packages/<dep-slug>`

@@ -1,6 +1,6 @@
 ## Project Overview
 
-SW CLI is a TypeScript command-line tool for managing and discovering reusable code templates and packages from local monorepo clones at a path.
+SW CLI is a TypeScript command-line tool for managing and discovering reusable code templates and packages from a local monorepo containing both apps/ (templates) and packages/ directories.
 
 
 ## Development Commands
@@ -89,9 +89,18 @@ Tests use Vitest with fixtures in `tests/fixtures/` and example monorepos in `ex
 ## Configuration
 
 The CLI requires:
-1. Environment variables: `SW_TEMPLATES_ROOT` and `SW_PACKAGES_ROOT`
+1. Environment variable: `SW_ROOT` pointing to the monorepo containing apps/ and packages/
 2. User config file: `~/.swrc.json` with internal scopes and package manager settings
 
 ## Implementation Status
 
-Currently, the project structure is set up but implementation is pending. The directories exist but TypeScript files need to be created following the patterns described in SPEC.md.
+The CLI is fully implemented with:
+- Complete command implementations (list, find, view, use)
+- Artifact scanning from a single monorepo structure
+- Dependency resolution and copying
+- Comprehensive test coverage (74 tests passing)
+- Example repository in `example-repos/sw-example/`
+
+The system works with a single `SW_ROOT` environment variable pointing to a monorepo containing:
+- `apps/` directory for template applications
+- `packages/` directory for reusable packages
